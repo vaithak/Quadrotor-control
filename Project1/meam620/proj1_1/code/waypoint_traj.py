@@ -20,11 +20,11 @@ class WaypointTraj(object):
         """
 
         # STUDENT CODE HERE
-        self.speed = 2.3 # m/s
+        self.speed = 2.55 # m/s
         self.ts = np.array([np.linalg.norm(points[i+1]-points[i])/self.speed for i in range(len(points)-1)])
         self.total_time = np.sum(self.ts)
         self.points = points
-                           
+
 
     def update(self, t):
         """

@@ -36,8 +36,8 @@ class SE3Control(object):
         self.g = 9.81 # m/s^2
 
         # STUDENT CODE HERE
-        self.kp_x = np.diag([3.0, 3.0, 3.2])
-        self.kd_x = np.diag([2.95, 2.95, 2.95])
+        self.kp_x = np.diag([3.1, 3.1, 3.1])
+        self.kd_x = np.diag([3.05, 3.05, 2.75])
 
         self.k_R = np.diag([100, 100, 100])
         self.k_w = np.diag([12, 12, 12])
@@ -105,7 +105,7 @@ class SE3Control(object):
         # Calculate motor speeds
         u = np.concatenate(([cmd_thrust], cmd_moment))
         F = self.u_to_F_matrix @ u
-        cmd_motor_speeds = np.sqrt(F / self.k_thrust)
+        cmd_motor_speeds = np.sqrt(np.fabs(F) / self.k_thrust)
 
         control_input = {'cmd_motor_speeds':cmd_motor_speeds,
                          'cmd_thrust':cmd_thrust,

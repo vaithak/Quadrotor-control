@@ -69,14 +69,26 @@ def test_mission(graph_search_fn, occupancy_map, world, start, goal, resolution,
     results = {}
     metrics = {}
 
+    import cProfile
+
     if dijkstra:
         start_time = time.time()
+
+        # Profiling
+        # rand_num = np.random.randint(0, 1000)
+        # cProfile.runctx('results["dijkstra_path"], _ = graph_search_fn(world, resolution, margin, start, goal, False)', globals(), locals(), filename=f'dijkstra_{rand_num}.prof')
+
         results['dijkstra_path'], _ = graph_search_fn(world, resolution, margin, start, goal, False)
         dijkstra_time = round(time.time() - start_time, 3)
         set_path_metrics(metrics, 'dijkstra', results['dijkstra_path'], dijkstra_time, world, start, goal, resolution, margin, expected_path_length)
 
     if astar:
         start_time = time.time()
+
+        # Profiling
+        # rand_num = np.random.randint(0, 1000)
+        # cProfile.runctx('results["astar_path"], _ = graph_search_fn(world, resolution, margin, start, goal, True)', globals(), locals(), filename=f'astar_{rand_num}.prof')
+
         results['astar_path'], _ = graph_search_fn(world, resolution, margin, start, goal, True)
         astar_time = round(time.time() - start_time, 3)
         set_path_metrics(metrics, 'astar', results['astar_path'], astar_time, world, start, goal, resolution, margin, expected_path_length)

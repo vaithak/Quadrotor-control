@@ -32,17 +32,7 @@ class Node:
         return f"Node({self.index}, {self.parent}, {self.cost}, {self.heuristic})"
 
 
-def cost_fxn(node, neighbor):
-    return node.cost + np.linalg.norm(node.metric_coord - neighbor.metric_coord)
-
-
-def heuristic_fxn(node, goal_node, astar):
-    if not astar:
-        return 0
-    return np.linalg.norm(node.metric_coord - goal_node.metric_coord)
-
-
-def get_neighbors(node, occ_map, goal_node, astar):
+def get_neighbors(node, occ_map, goal_node, astar, cost_map, visited):
     neighbors = []
     for i in range(-1, 2):
         for j in range(-1, 2):
@@ -50,15 +40,23 @@ def get_neighbors(node, occ_map, goal_node, astar):
                 if i == 0 and j == 0 and k == 0:
                     continue
                 index = (node.index[0] + i, node.index[1] + j, node.index[2] + k)
+                if index in visited:
+                    continue
+
                 if occ_map.is_valid_index(index) and not occ_map.is_occupied_index(index):
                     metric_coord = occ_map.index_to_metric_center(index)
                     if index == goal_node.index:
                         metric_coord = goal_node.metric_coord
-                    neighbor_node = Node(index, None, 0, 0, metric_coord)
-                    cost = cost_fxn(node, neighbor_node)
-                    heuristic_value = heuristic_fxn(neighbor_node, goal_node, astar)
-                    neighbor_node.cost = cost
-                    neighbor_node.heuristic = heuristic_value
+                    new_cost = np.sqrt(np.sum((node.metric_coord - metric_coord)**2))
+                    
+                    cost = new_cost + node.cost
+                    if index in cost_map and cost_map[index] <= cost:
+                        continue
+                    cost_map[index] = cost
+                    heuristic_value = 0
+                    if astar:
+                        heuristic_value = np.sqrt(np.sum((goal_node.metric_coord - metric_coord)**2))
+                    neighbor_node = Node(index, node, cost, heuristic_value, metric_coord)
                     neighbors.append(neighbor_node)
                     
     return neighbors
@@ -88,16 +86,20 @@ def graph_search(world, resolution, margin, start, goal, astar):
     # Retrieve the index in the occupancy grid matrix corresponding to a position in space.
     start_index = tuple(occ_map.metric_to_index(start))
     goal_index = tuple(occ_map.metric_to_index(goal))
-    start_node = Node(start_index, None, 0, np.linalg.norm(start - goal), start)
+    start_node = Node(start_index, None, 0, np.sqrt(np.sum((start - goal)**2)), start)
     goal_node = Node(goal_index, None, np.inf, 0, goal)
 
     priority_queue = []
     heappush(priority_queue, start_node)
-    cost_map = {start_node: 0}
+    cost_map = {start_node.index: 0}
     nodes_expanded = 0
+    visited = set()
 
     while priority_queue:
         current_node = heappop(priority_queue)
+        if current_node.index in visited:
+            continue
+        visited.add(current_node.index)
 
         if current_node == goal_node:
             path = []
@@ -107,12 +109,9 @@ def graph_search(world, resolution, margin, start, goal, astar):
             path.reverse()
             return (np.array(path), nodes_expanded)
         
-        neighbors = get_neighbors(current_node, occ_map, goal_node, astar)
+        neighbors = get_neighbors(current_node, occ_map, goal_node, astar, cost_map, visited)
         for neighbor in neighbors:
-            if neighbor not in cost_map or cost_map[neighbor] > neighbor.cost:
-                neighbor.parent = current_node
-                cost_map[neighbor] = neighbor.cost
-                heappush(priority_queue, neighbor)
+            heappush(priority_queue, neighbor)
 
         nodes_expanded += 1
 

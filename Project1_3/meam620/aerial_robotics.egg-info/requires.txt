@@ -1,7 +1,0 @@
-cvxopt
-matplotlib==3.2.2
-numpy
-opencv-python
-pyyaml
-scipy
-timeout_decorator
